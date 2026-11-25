@@ -91,7 +91,6 @@ mvn -q test -Dtest='<TestClass>'
 # docker-compose PostgreSQL / Kafka / Schema Registry on fixed ports 5432/9092/8081/2181: one stack at a time).
 # Surefire failures stop the build before the integration tests: add -Dmaven.test.failure.ignore=true to see both.
 # known failing at the baseline (2026-11-25), each fixed by a board task (docs/tasks.md tests:):
-#   ArchitectureTest.respectsLayersForHexagonalArchitecture: core.application uses the generated producer in asyncapi.provider -> T-02 (HITL)
 #   FulfillmentRepositoryIntegrationTest.updateTest: generated test asserts Instant.now() and embedded objects without equals -> T-01
 mvn -q verify
 # lint the models

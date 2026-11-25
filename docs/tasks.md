@@ -2,6 +2,7 @@
 
 flow: ../arcadia-editions-architecture/business-flows/place-order-flow.zfl
 baseline:
+approved: 2026-11-25 by the person (tasks and slices reviewed)
 branch: afk/place-order-flow
 
 <!--
@@ -16,7 +17,7 @@ arcadia-editions-architecture tag baseline/place-order-flow-<n>.
 Open proposal: P-01 (markReadyToShip has no trigger and no carrierCode/trackingNumber input) blocks T-18.
 markReadyToShip is outside place-order-flow's command list (zfl:30): slice S4 only because the flow says the warehouse
 may mark ready to ship after capture (zfl:54, zfl:216).
-Baseline failures (mvn verify, 2026-11-25): ArchitectureTest (T-02), FulfillmentRepositoryIntegrationTest#updateTest (T-01); data.sql loads.
+Baseline failures (mvn verify, 2026-11-25): FulfillmentRepositoryIntegrationTest#updateTest (T-01); data.sql loads.
 -->
 
 ## S0 Baseline
@@ -25,7 +26,7 @@ review: [ ]
 - [ ] T-01 mechanical AFK Generated tests that should pass do: FulfillmentRepositoryIntegrationTest#updateTest without Instant.now() and without comparing embedded objects that have no equals
       test data: data.sql (C-01, id 1)
       tests: FulfillmentRepositoryIntegrationTest#updateTest
-- [ ] T-02 bounded HITL ArchitectureTest fails: core.application (FulfillmentShippingServiceImpl.eventsProducer) uses the generated producer in asyncapi.provider (outside the hexagon, as zenwave-scripts.zw sets it). Decide: allow the dependency in the rule, or put an outbound port in core.outbound; record it as an ADR (same decision as orders and catalog)
+- [x] T-02 bounded HITL ArchitectureTest fails: core.application (FulfillmentShippingServiceImpl.eventsProducer) uses the generated producer in asyncapi.provider (outside the hexagon, as zenwave-scripts.zw sets it). Decide: allow the dependency in the rule, or put an outbound port in core.outbound; record it as an ADR (same decision as orders and catalog). Decided 2026-11-25 by the person: allow it in the rule (EventProducerSDK layer), docs/adr/0001-core-application-uses-generated-event-producers.md
       tests: ArchitectureTest
 - [ ] T-03 mechanical AFK Inject a java.time.Clock (system clock in main, fixed 2026-10-14T10:00:00Z in tests) for scheduledAt, failedAt, readyAt and cancelledAt
       tests: FulfillmentShippingServiceTest
