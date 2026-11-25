@@ -17,15 +17,14 @@ Open proposal: P-01 (markReadyToShip has no trigger and no carrierCode/trackingN
 markReadyToShip is outside place-order-flow's command list (zfl:30): slice S4 only because the flow says the warehouse
 may mark ready to ship after capture (zfl:54, zfl:216).
 Baseline failures (to confirm in step 7, needs Docker): ArchitectureTest (seen, no Docker), FulfillmentRepositoryIntegrationTest#updateTest.
-FulfillmentShippingServiceTest passes on Windows only because data/jpa/fulfillment resolves to Fulfillment/ case-insensitively.
 -->
 
 ## S0 Baseline
 review: [ ]
 
-- [ ] T-01 mechanical AFK Generated tests that should pass do: TestDataLoader reads data/jpa/<Entity simple name> (it reads the table name, fulfillment, today: fixtures load only on a case-insensitive file system), FulfillmentRepositoryIntegrationTest#updateTest without Instant.now() and without comparing embedded objects that have no equals
-      test data: data/jpa/Fulfillment/1.json, data.sql (C-01, id 1)
-      tests: FulfillmentShippingServiceTest, FulfillmentRepositoryIntegrationTest#updateTest
+- [ ] T-01 mechanical AFK Generated tests that should pass do: FulfillmentRepositoryIntegrationTest#updateTest without Instant.now() and without comparing embedded objects that have no equals
+      test data: data.sql (C-01, id 1)
+      tests: FulfillmentRepositoryIntegrationTest#updateTest
 - [ ] T-02 bounded HITL ArchitectureTest fails: core.application (FulfillmentShippingServiceImpl.eventsProducer) uses the generated producer in asyncapi.provider (outside the hexagon, as zenwave-scripts.zw sets it). Decide: allow the dependency in the rule, or put an outbound port in core.outbound; record it as an ADR (same decision as orders and catalog)
       tests: ArchitectureTest
 - [ ] T-03 mechanical AFK Inject a java.time.Clock (system clock in main, fixed 2026-10-14T10:00:00Z in tests) for scheduledAt, failedAt, readyAt and cancelledAt
