@@ -31,7 +31,7 @@
 -- Read side: openapi.yml 0.2.0 has no paths -> no row
 --
 -- ASSUMPTIONS: assumption | value used | open question
--- A-01 fulfillmentId format | FUL-<order number> | generation rule not in the model (HITL T-05)
+-- A-01 fulfillmentId format | FUL-<order number> (fixture ids only) | decided T-05: the service generates a UUIDv7
 -- A-02 failureReason of a FAILED fulfillment | CARRIER_UNAVAILABLE | what decides SCHEDULED vs FAILED and its reasons is not in the model (HITL T-06)
 -- A-03 cancellationReason = OrderCancelled.reason (StockReleaseReason name) | PAYMENT_VOIDED | -
 -- A-04 carrierCode / trackingNumber of a READY_TO_SHIP fulfillment | CARRIER-01 / TRK-017 | no input carries them (P-01)
