@@ -16,7 +16,7 @@ arcadia-editions-architecture tag baseline/place-order-flow-<n>.
 Open proposal: P-01 (markReadyToShip has no trigger and no carrierCode/trackingNumber input) blocks T-18.
 markReadyToShip is outside place-order-flow's command list (zfl:30): slice S4 only because the flow says the warehouse
 may mark ready to ship after capture (zfl:54, zfl:216).
-Baseline failures (to confirm in step 7, needs Docker): ArchitectureTest (seen, no Docker), FulfillmentRepositoryIntegrationTest#updateTest.
+Baseline failures (mvn verify, 2026-11-25): ArchitectureTest (T-02), FulfillmentRepositoryIntegrationTest#updateTest (T-01); data.sql loads.
 -->
 
 ## S0 Baseline
