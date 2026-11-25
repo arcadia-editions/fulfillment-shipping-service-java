@@ -1,0 +1,24 @@
+{
+    "id": 101,
+    "version": 0,
+    "fulfillmentId": "FUL-009",
+    "orderId": "ORD-009",
+    "customerId": "CUST-009",
+    "status": "CANCELLED",
+    "shippingAddress": {
+        "name": "Arcadia Customer 9",
+        "line1": "9 Book Lane",
+        "city": "Madrid",
+        "postalCode": "28009",
+        "country": "ES"
+    },
+    "items": [
+        {
+            "sku": "SKU-002",
+            "quantity": 1
+        }
+    ],
+    "scheduledAt": "2026-10-14T09:50:49Z",
+    "cancelledAt": "2026-10-14T09:51:40Z",
+    "cancellationReason": "PAYMENT_VOIDED"
+}

@@ -1,0 +1,26 @@
+{
+    "id": 301,
+    "version": 0,
+    "fulfillmentId": "FUL-017",
+    "orderId": "ORD-017",
+    "customerId": "CUST-017",
+    "status": "READY_TO_SHIP",
+    "shippingAddress": {
+        "name": "Arcadia Customer 17",
+        "line1": "17 Book Lane",
+        "city": "Madrid",
+        "postalCode": "28017",
+        "country": "ES"
+    },
+    "items": [
+        {
+            "sku": "SKU-002",
+            "quantity": 1
+        }
+    ],
+    "carrierCode": "CARRIER-01",
+    "trackingNumber": "TRK-017",
+    "scheduledAt": "2026-10-14T09:55:17Z",
+    "readyAt": "2026-10-14T09:56:17Z",
+    "paymentCapturedAt": "2026-10-14T09:55:47Z"
+}

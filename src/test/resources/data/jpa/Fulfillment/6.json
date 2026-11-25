@@ -1,0 +1,22 @@
+{
+    "id": 251,
+    "version": 0,
+    "fulfillmentId": "FUL-016",
+    "orderId": "ORD-016",
+    "customerId": "CUST-016",
+    "status": "SCHEDULED",
+    "shippingAddress": {
+        "name": "Arcadia Customer 16",
+        "line1": "16 Book Lane",
+        "city": "Madrid",
+        "postalCode": "28016",
+        "country": "ES"
+    },
+    "items": [
+        {
+            "sku": "SKU-002",
+            "quantity": 1
+        }
+    ],
+    "scheduledAt": "2026-10-14T09:55:16Z"
+}

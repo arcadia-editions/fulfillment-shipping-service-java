@@ -1,0 +1,23 @@
+{
+    "id": 51,
+    "version": 0,
+    "fulfillmentId": "FUL-004",
+    "orderId": "ORD-004",
+    "customerId": "CUST-004",
+    "status": "FAILED",
+    "shippingAddress": {
+        "name": "Arcadia Customer 4",
+        "line1": "4 Book Lane",
+        "city": "Madrid",
+        "postalCode": "28004",
+        "country": "ES"
+    },
+    "items": [
+        {
+            "sku": "SKU-002",
+            "quantity": 1
+        }
+    ],
+    "failedAt": "2026-10-14T09:50:44Z",
+    "failureReason": "CARRIER_UNAVAILABLE"
+}
