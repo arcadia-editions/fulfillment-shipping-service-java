@@ -1,5 +1,6 @@
 package com.arcadiaeditions.fulfillment.shipping.core.domain;
 
+
 /**
  * Enum for FulfillmentStatus.
  */

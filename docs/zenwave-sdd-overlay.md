@@ -63,7 +63,7 @@ the sibling clones above; no mapping needed. This service owns `fulfillment-ship
 
 - Deployment: **microservices** (one bounded context per repository; Kafka and AsyncAPI with Avro payloads, Schema
   Registry; ZDL consumers use `@asyncapi`).
-- Code already in place: yes (`zenwave-tasks-from-code-and-models`). Generated with ZenWave SDK: yes (commit `83d78b3`);
+- Code already in place: yes (`zenwave-tasks-from-code-and-models`). Generated with ZenWave SDK: yes (commit `83d78b3`; regenerated from service-all 0.2.0 with no code change);
   service methods and event listeners are still the generated `TODO`s.
 - Stack: Java 25, Spring Boot 4.1.2, Spring Cloud Stream (Kafka), MapStruct, ArchUnit, Maven (no wrapper: `mvn`).
 - Persistence: `jpa` (PostgreSQL; Testcontainers via docker-compose in tests).
