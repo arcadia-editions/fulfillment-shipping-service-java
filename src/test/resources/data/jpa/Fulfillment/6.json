@@ -1,15 +1,15 @@
 {
     "id": 251,
     "version": 0,
-    "fulfillmentId": "FUL-016",
-    "orderId": "ORD-016",
-    "customerId": "CUST-016",
+    "fulfillmentId": "FUL-021",
+    "orderId": "ORD-021",
+    "customerId": "CUST-021",
     "status": "SCHEDULED",
     "shippingAddress": {
-        "name": "Arcadia Customer 16",
-        "line1": "16 Book Lane",
+        "name": "Arcadia Customer 21",
+        "line1": "21 Book Lane",
         "city": "Madrid",
-        "postalCode": "28016",
+        "postalCode": "28021",
         "country": "ES"
     },
     "items": [
