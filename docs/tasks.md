@@ -41,6 +41,7 @@ review: [ ]
       test data: data.sql (C-04, C-10)
 - [ ] T-07 mechanical AFK Spring Cloud Stream bindings in application.yml for the produced channels (fulfillment-scheduled, fulfillment-failed, fulfillment-ready-to-ship, fulfillment-cancelled) and the consumed order-confirmed-event-v1, order-cancelled-event-v1, payment-captured-event-v1, replacing the archetype's on-customer-event
       model: ../fulfillment-shipping-api/domain-model.zdl:131, ../fulfillment-shipping-api/domain-model.zdl:139, ../fulfillment-shipping-api/domain-model.zdl:147, ../fulfillment-shipping-api/domain-model.zdl:152, ../fulfillment-shipping-api/domain-model.zdl:160, ../fulfillment-shipping-api/domain-model.zdl:169, ../fulfillment-shipping-api/domain-model.zdl:180
+      test data: data.sql (C-02 for a consumed OrderConfirmed, C-21 for a produced FulfillmentCancelled)
       blocked by: T-01
 
 ## S1 completed (tracer bullet)
