@@ -1,0 +1,124 @@
+# PlaceOrderFlow: tasks
+
+flow: ../arcadia-editions-architecture/business-flows/place-order-flow.zfl
+baseline:
+branch: afk/place-order-flow
+
+<!--
+Scope: the FulfillmentShipping bounded context (this repository) only. The steps of the other contexts (orders,
+catalog, payments, notifications) are boards of their own repositories; here they are Kafka messages.
+Model paths: ZFL = ../arcadia-editions-architecture/business-flows/place-order-flow.zfl,
+ZDL = ../fulfillment-shipping-api/domain-model.zdl; consumed Avro: ../orders-checkout-api/avro/OrderConfirmed*.avsc,
+OrderCancelled.avsc, ../payments-processing-api/avro/PaymentCaptured.avsc.
+Test data chains C-01..C-17 (not contiguous): header of src/test/resources/data.sql (assumptions A-01..A-08 there).
+Approved models: fulfillment-shipping-api service-all 0.2.0 (tag release/service-all/v0.2.0); ZFL at
+arcadia-editions-architecture tag baseline/place-order-flow-<n>.
+Open proposal: P-01 (markReadyToShip has no trigger and no carrierCode/trackingNumber input) blocks T-18.
+markReadyToShip is outside place-order-flow's command list (zfl:30): slice S4 only because the flow says the warehouse
+may mark ready to ship after capture (zfl:54, zfl:216).
+Baseline failures (to confirm in step 7, needs Docker): ArchitectureTest (seen, no Docker), FulfillmentRepositoryIntegrationTest#updateTest.
+FulfillmentShippingServiceTest passes on Windows only because data/jpa/fulfillment resolves to Fulfillment/ case-insensitively.
+-->
+
+## S0 Baseline
+review: [ ]
+
+- [ ] T-01 mechanical AFK Generated tests that should pass do: TestDataLoader reads data/jpa/<Entity simple name> (it reads the table name, fulfillment, today: fixtures load only on a case-insensitive file system), FulfillmentRepositoryIntegrationTest#updateTest without Instant.now() and without comparing embedded objects that have no equals
+      test data: data/jpa/Fulfillment/1.json, data.sql (C-01, id 1)
+      tests: FulfillmentShippingServiceTest, FulfillmentRepositoryIntegrationTest#updateTest
+- [ ] T-02 bounded HITL ArchitectureTest fails: core.application (FulfillmentShippingServiceImpl.eventsProducer) uses the generated producer in asyncapi.provider (outside the hexagon, as zenwave-scripts.zw sets it). Decide: allow the dependency in the rule, or put an outbound port in core.outbound; record it as an ADR (same decision as orders and catalog)
+      tests: ArchitectureTest
+- [ ] T-03 mechanical AFK Inject a java.time.Clock (system clock in main, fixed 2026-10-14T10:00:00Z in tests) for scheduledAt, failedAt, readyAt and cancelledAt
+      tests: FulfillmentShippingServiceTest
+      blocked by: T-01
+- [ ] T-04 mechanical AFK FulfillmentRepository.findByOrderId (JPA and in-memory twin): every listener command correlates by orderId (unique)
+      model: ../fulfillment-shipping-api/domain-model.zdl:58, ../fulfillment-shipping-api/domain-model.zdl:130-149
+      test data: data.sql (C-01, C-15)
+      tests: FulfillmentRepositoryIntegrationTest
+- [ ] T-05 bounded HITL Decide how fulfillmentId is generated (format, uniqueness) and record it as an ADR; the ZDL and ZFL do not say (fixtures assume FUL-<order number>, A-01)
+      model: ../fulfillment-shipping-api/domain-model.zdl:57, ../fulfillment-shipping-api/domain-model.zdl:152-158
+- [ ] T-06 bounded HITL Decide what makes scheduleFulfillment answer FAILED instead of SCHEDULED (warehouse issue, carrier problem, item damage: which system or rule decides, from which input) and the failureReason values; record it as an ADR (fixtures assume CARRIER_UNAVAILABLE, A-02; the modulith uses a FulfillmentDecision port with a stand-in)
+      model: ../arcadia-editions-architecture/business-flows/place-order-flow.zfl:178-188, ../fulfillment-shipping-api/domain-model.zdl:130-133, ../fulfillment-shipping-api/domain-model.zdl:160-167
+      test data: data.sql (C-04, C-10)
+- [ ] T-07 mechanical AFK Spring Cloud Stream bindings in application.yml for the produced channels (fulfillment-scheduled, fulfillment-failed, fulfillment-ready-to-ship, fulfillment-cancelled) and the consumed order-confirmed-event-v1, order-cancelled-event-v1, payment-captured-event-v1, replacing the archetype's on-customer-event
+      model: ../fulfillment-shipping-api/domain-model.zdl:131, ../fulfillment-shipping-api/domain-model.zdl:139, ../fulfillment-shipping-api/domain-model.zdl:147, ../fulfillment-shipping-api/domain-model.zdl:152, ../fulfillment-shipping-api/domain-model.zdl:160, ../fulfillment-shipping-api/domain-model.zdl:169, ../fulfillment-shipping-api/domain-model.zdl:180
+      blocked by: T-01
+
+## S1 completed (tracer bullet)
+path: ... > OrderConfirmed > scheduleFulfillment[FulfillmentScheduled] > FulfillmentScheduled > capturePayment
+      > PaymentCaptured > recordPaymentCaptured, sendOrderConfirmation > OrderConfirmationSent > end completed
+review: [ ]
+
+- [ ] T-08 bounded AFK scheduleFulfillment scheduled: a Fulfillment exists for orderId: return it, no change, no event (redelivery); else create it SCHEDULED with fulfillmentId per T-05, scheduledAt from the Clock, persist, emit FulfillmentScheduled only (not both alternatives, as generated); the FAILED branch is T-16
+      model: ../arcadia-editions-architecture/business-flows/place-order-flow.zfl:178-188, ../fulfillment-shipping-api/domain-model.zdl:130-133, ../fulfillment-shipping-api/domain-model.zdl:86-104, ../fulfillment-shipping-api/domain-model.zdl:152-158
+      test data: data.sql (C-02 input from orders' ORD-002 with 2 lines, C-01 redelivery)
+      tests: FulfillmentShippingServiceTest#scheduleFulfillmentTest
+      blocked by: T-03, T-04, T-05
+- [ ] T-09 mechanical AFK OrderConfirmedConsumerService: map OrderConfirmed (orderId, customerId, items, shippingAddress) to ScheduleFulfillmentInput and call scheduleFulfillment (replace the UnsupportedOperationException stub)
+      model: ../fulfillment-shipping-api/domain-model.zdl:131, ../fulfillment-shipping-api/domain-model.zdl:93-98
+      test data: data.sql (C-02)
+      tests: OrderConfirmedConsumerServiceTest
+      blocked by: T-07, T-08
+- [ ] T-10 bounded AFK recordPaymentCaptured: load by orderId; no Fulfillment, not SCHEDULED, or paymentCapturedAt already set: no-op; else paymentCapturedAt = input.capturedAt, persist; no state change, no event
+      model: ../arcadia-editions-architecture/business-flows/place-order-flow.zfl:215-221, ../fulfillment-shipping-api/domain-model.zdl:135-140, ../fulfillment-shipping-api/domain-model.zdl:80-81
+      test data: data.sql (C-15 sets, C-07 none, C-04 / C-09 / C-17 not SCHEDULED, C-01 already set)
+      tests: FulfillmentShippingServiceTest#recordPaymentCapturedTest
+      blocked by: T-01, T-04
+- [ ] T-11 mechanical AFK PaymentCapturedConsumerService: map PaymentCaptured (orderId, capturedAt ISO string to Instant) to RecordPaymentCapturedInput and call recordPaymentCaptured (replace the stub)
+      model: ../fulfillment-shipping-api/domain-model.zdl:139, ../fulfillment-shipping-api/domain-model.zdl:100-104
+      test data: data.sql (C-15)
+      tests: PaymentCapturedConsumerServiceTest
+      blocked by: T-07, T-10
+- [ ] T-12 bounded AFK Flow test completed (fulfillment side): an OrderConfirmed message (ORD-002 shape) creates a SCHEDULED Fulfillment and publishes FulfillmentScheduled on fulfillment-shipping.fulfillment-scheduled.event.avro.v1; redelivered, it publishes nothing; a PaymentCaptured message sets paymentCapturedAt
+      model: ../arcadia-editions-architecture/business-flows/place-order-flow.zfl:178-221, ../arcadia-editions-architecture/business-flows/place-order-flow.zfl:340-342
+      test data: data.sql (C-01, C-02, C-15)
+      tests: PlaceOrderFlowCompletedTest
+      blocked by: T-09, T-11
+
+## S2 orderCancelled (capture failed)
+path: FulfillmentScheduled > capturePayment[PaymentCaptureFailed] > voidPayment[voided] > PaymentVoided > releaseStock
+      > StockReleased > cancelOrder > OrderCancelled > cancelFulfillment > FulfillmentCancelled
+      > sendOrderCancelledNotification > end orderCancelled
+review: [ ]
+
+- [ ] T-13 bounded AFK cancelFulfillment: load by orderId; no Fulfillment, FAILED or CANCELLED: no-op, no event (Optional.empty()); SCHEDULED or READY_TO_SHIP: CANCELLED, cancelledAt from the Clock, cancellationReason = input.reason, persist, emit FulfillmentCancelled (replace the TODO CUSTOM_REQUIRED lookup)
+      model: ../arcadia-editions-architecture/business-flows/place-order-flow.zfl:311-320, ../fulfillment-shipping-api/domain-model.zdl:146-149, ../fulfillment-shipping-api/domain-model.zdl:106-110, ../fulfillment-shipping-api/domain-model.zdl:179-187
+      test data: data.sql (C-16 from SCHEDULED, C-17 from READY_TO_SHIP, C-07 none, C-04 / C-10 FAILED, C-09 CANCELLED)
+      tests: FulfillmentShippingServiceTest#cancelFulfillmentTest
+      blocked by: T-03, T-04
+- [ ] T-14 mechanical AFK OrderCancelledConsumerService: map OrderCancelled (orderId, reason) to CancelFulfillmentInput and call cancelFulfillment (replace the stub)
+      model: ../fulfillment-shipping-api/domain-model.zdl:147, ../fulfillment-shipping-api/domain-model.zdl:106-110
+      test data: data.sql (C-16)
+      tests: OrderCancelledConsumerServiceTest
+      blocked by: T-07, T-13
+- [ ] T-15 bounded AFK Flow test orderCancelled after capture failure (fulfillment side): an OrderCancelled PAYMENT_VOIDED message for C-16 makes it CANCELLED and publishes FulfillmentCancelled on fulfillment-shipping.fulfillment-cancelled.event.avro.v1; redelivered, nothing; for C-07 (no Fulfillment), nothing
+      model: ../arcadia-editions-architecture/business-flows/place-order-flow.zfl:190-200, ../arcadia-editions-architecture/business-flows/place-order-flow.zfl:311-320, ../arcadia-editions-architecture/business-flows/place-order-flow.zfl:340-344
+      test data: data.sql (C-07, C-09, C-16)
+      tests: PlaceOrderFlowCancelledTest#captureFailed
+      blocked by: T-12, T-14
+
+## S3 orderCancelled (fulfillment failed)
+path: OrderConfirmed > scheduleFulfillment[FulfillmentFailed] > FulfillmentFailed > voidPayment > PaymentVoided | PaymentVoidFailed
+      > releaseStock > StockReleased > cancelOrder > OrderCancelled > cancelFulfillment (no-op) > end orderCancelled
+review: [ ]
+
+- [ ] T-16 bounded AFK scheduleFulfillment failed: when the T-06 rule says so, create the Fulfillment FAILED with failedAt from the Clock and failureReason per T-06, persist, emit FulfillmentFailed only; redelivery stays a no-op
+      model: ../arcadia-editions-architecture/business-flows/place-order-flow.zfl:178-188, ../fulfillment-shipping-api/domain-model.zdl:130-133, ../fulfillment-shipping-api/domain-model.zdl:160-167
+      test data: data.sql (C-04, C-10 result shape)
+      tests: FulfillmentShippingServiceTest#scheduleFulfillmentFailedTest
+      blocked by: T-06, T-08
+- [ ] T-17 bounded AFK Flow test fulfillment failed (fulfillment side): an OrderConfirmed that fails per T-06 publishes FulfillmentFailed on fulfillment-shipping.fulfillment-failed.event.avro.v1 and no FulfillmentScheduled; the OrderCancelled that follows (C-04, C-10 shape) publishes nothing
+      model: ../arcadia-editions-architecture/business-flows/place-order-flow.zfl:178-188, ../arcadia-editions-architecture/business-flows/place-order-flow.zfl:236-252, ../arcadia-editions-architecture/business-flows/place-order-flow.zfl:311-320
+      test data: data.sql (C-04, C-10)
+      tests: PlaceOrderFlowCancelledTest#fulfillmentFailed
+      blocked by: T-15, T-16
+
+## S4 warehouse ready to ship (outside the flow's commands)
+review: [ ]
+
+- [!] T-18 bounded AFK markReadyToShip: refused (no transition, no event, a cause that names the missing capture) while paymentCapturedAt is null; SCHEDULED to READY_TO_SHIP with readyAt from the Clock and carrierCode / trackingNumber per P-01, persist, emit FulfillmentReadyToShip; the inbound adapter per P-01
+      model: ../arcadia-editions-architecture/business-flows/place-order-flow.zfl:54-56, ../arcadia-editions-architecture/business-flows/place-order-flow.zfl:215-221, ../fulfillment-shipping-api/domain-model.zdl:142-144, ../fulfillment-shipping-api/domain-model.zdl:169-177
+      test data: data.sql (C-01 allowed, C-15 refused, C-17 not SCHEDULED)
+      tests: FulfillmentShippingServiceTest#markReadyToShipTest
+      blocked by: T-03
+      blocked: P-01
