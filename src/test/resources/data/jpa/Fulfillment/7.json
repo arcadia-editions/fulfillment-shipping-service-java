@@ -18,8 +18,8 @@
             "quantity": 1
         }
     ],
-    "carrierCode": "CARRIER-01",
-    "trackingNumber": "TRK-022",
+    "carrierCode": "STAND-IN",
+    "trackingNumber": "TRK-FUL-022",
     "scheduledAt": "2026-10-14T09:55:17Z",
     "readyAt": "2026-10-14T09:56:17Z",
     "paymentCapturedAt": "2026-10-14T09:55:47Z"
