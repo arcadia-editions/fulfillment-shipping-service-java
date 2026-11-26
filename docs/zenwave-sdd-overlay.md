@@ -23,7 +23,7 @@ The flow also references the other contexts' ZDLs: `../orders-checkout-api`, `..
 | Domain summary | `docs/domain.md` |
 | Board of the flow in progress | `docs/tasks.md` (archived boards in `docs/tasks/`) |
 | Model gap proposals | `docs/proposals/` |
-| Test data and scenario matrix | `src/test/resources/data.sql` (header: scenario and coverage matrices, chains `C-01`..`C-22` (not contiguous: only those with a Fulfillment case), assumptions A-01..A-08, the fixed test "now" `2026-10-14T10:00:00Z` read by tests through a fixed `Clock`, not yet in the code) and `src/test/resources/data/jpa/Fulfillment/<n>.json` |
+| Test data and scenario matrix | `src/test/resources/data.sql` (header: scenario and coverage matrices, chains `C-01`..`C-23` (not contiguous: only those with a Fulfillment case), assumptions A-01..A-09, the fixed test "now" `2026-10-14T10:00:00Z` read by tests through a fixed `Clock`, not yet in the code) and `src/test/resources/data/jpa/Fulfillment/<n>.json` |
 | Generation script | `zenwave-scripts.zw` |
 
 **`zenwave-scripts.zw` and `pom.xml` read the models from released packages** (`@import(...)` and `classpath:`):
@@ -66,7 +66,9 @@ the sibling clones above; no mapping needed. This service owns `fulfillment-ship
 - Code already in place: yes (`zenwave-tasks-from-code-and-models`). Generated with ZenWave SDK: yes (commit `83d78b3`; regenerated from service-all 0.2.0 with no code change);
   service methods and event listeners are still the generated `TODO`s.
 - Stack: Java 25, Spring Boot 4.1.2, Spring Cloud Stream (Kafka), MapStruct, ArchUnit, Maven (no wrapper: `mvn`).
-- Persistence: `jpa` (PostgreSQL; Testcontainers via docker-compose in tests).
+- Persistence: `jpa` (PostgreSQL; Testcontainers via docker-compose in tests). Events: transactional outbox
+  (ADR 0003): the generated producers publish to Spring Modulith's JDBC event publication registry, externalized
+  through Spring Cloud Stream after commit (`EventExternalizationConfiguration`).
 - Organization prefix and packages: `com.arcadiaeditions` (base package `com.arcadiaeditions.fulfillment.shipping`),
   `CleanHexagonalProjectLayout`: `core.domain`, `core.application`, `core.inbound`, `core.outbound`,
   `adapters.web`, `infrastructure` (JPA), `config`; generated AsyncAPI SDK outside the hexagon in
@@ -87,10 +89,10 @@ mkdir -p target && mvn -q -DskipTests clean compile 2>&1 | tee target/compile.lo
 # focused tests of a task (the implementer runs only these)
 mvn -q test -Dtest='<TestClass>'
 # full suite with integration tests and containers (once per slice review)
-# about 4.5 minutes (271 s, 2026-11-25, mvn -q verify -Dmaven.test.failure.ignore=true); needs Docker (Testcontainers starts the
+# about 5 minutes (282 s, 2026-11-26, with the outbox; mvn -q verify -Dmaven.test.failure.ignore=true); needs Docker (Testcontainers starts the
 # docker-compose PostgreSQL / Kafka / Schema Registry on fixed ports 5432/9092/8081/2181: one stack at a time).
 # Surefire failures stop the build before the integration tests: add -Dmaven.test.failure.ignore=true to see both.
-# known failing at the baseline (2026-11-25), each fixed by a board task (docs/tasks.md tests:):
+# known failing at the baseline (2026-11-26, unchanged by the outbox), each fixed by a board task (docs/tasks.md tests:):
 #   FulfillmentRepositoryIntegrationTest.updateTest: generated test asserts Instant.now() and embedded objects without equals -> T-01
 mvn -q verify
 # lint the models
@@ -110,6 +112,9 @@ The orchestrator gives the workers the focused command (with the task's `tests:`
   Testcontainers.
 - Generated at build time into `target/` (never edit): OpenAPI interfaces and `*DTO`s, the AsyncAPI SDK.
 - Format with `mvn spotless:apply`.
-- Decisions already taken that the models don't show: none recorded yet (`docs/adr/`). For a reference
+- Decisions already taken that the models don't show (`docs/adr/`): 0001 core.application uses the generated event
+  producers; 0002 stand-in fulfillment decision (postalCode `00000` fails `CARRIER_UNAVAILABLE`; stand-in carrier
+  values on markReadyToShip); 0003 transactional outbox with Spring Modulith (events leave after commit; table
+  `event_publication`). Gate review of place-order-flow: `docs/gate/`. For a reference
   implementation of the same flow, see `../arcadia-editions-modulith-service-java/docs/zenwave-sdd-overlay.md`
   (Project rules) and its ADRs.
