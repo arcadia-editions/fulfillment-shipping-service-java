@@ -19,7 +19,7 @@
 -- COVERAGE (need -> chain, or why no row)
 -- Lifecycle: markReadyToShip from SCHEDULED -> C-01 (captured), C-20 (not captured: refused); cancelFulfillment from SCHEDULED -> C-21, from READY_TO_SHIP -> C-22;
 --   scheduleFulfillment has no from: (creates) -> C-02 (no row)
--- Branches: scheduleFulfillment SCHEDULED | FAILED -> no row decides it: the rule is not in the models (HITL T-06); result shapes C-01 / C-04;
+-- Branches: scheduleFulfillment SCHEDULED | FAILED -> no row decides it: stand-in rule of T-06 (ADR 0002, postalCode 00000 fails); result shapes C-01 / C-04;
 --   recordPaymentCaptured sets -> C-20, no Fulfillment -> C-07, not SCHEDULED -> C-04 / C-09 / C-22, already set -> C-01;
 --   markReadyToShip refused until paymentCapturedAt -> C-20, allowed -> C-01; cancelFulfillment no-op: none C-07, FAILED C-04 / C-10, CANCELLED C-09
 -- Outcomes (fulfillment side): completed -> C-01; orderCancelled after capture failure -> C-09 (C-21 before cancelFulfillment); after fulfillment failure -> C-04
@@ -32,7 +32,7 @@
 --
 -- ASSUMPTIONS: assumption | value used | open question
 -- A-01 fulfillmentId format | FUL-<order number> (fixture ids only) | decided T-05: the service generates a UUIDv7
--- A-02 failureReason of a FAILED fulfillment | CARRIER_UNAVAILABLE | what decides SCHEDULED vs FAILED and its reasons is not in the model (HITL T-06)
+-- A-02 failureReason of a FAILED fulfillment | CARRIER_UNAVAILABLE | decided T-06, ADR 0002 (stand-in: postalCode 00000 fails)
 -- A-03 cancellationReason = OrderCancelled.reason (StockReleaseReason name) | PAYMENT_VOIDED | -
 -- A-04 carrierCode / trackingNumber of a READY_TO_SHIP fulfillment | CARRIER-01 / TRK-022 | no input carries them (P-01)
 -- A-05 scheduledAt / failedAt = order confirmedAt + 10 s; paymentCapturedAt = scheduledAt + 30 s; FAILED rows have no scheduledAt | as listed | -
