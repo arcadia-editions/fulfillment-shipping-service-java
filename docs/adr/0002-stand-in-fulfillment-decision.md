@@ -17,6 +17,12 @@ one deterministic stand-in adapter.
 
 Flow tests that need FAILED send an OrderConfirmed with postal code `00000`. No other failure reasons.
 
+### Ready to ship (added 2026-11-26, P-01)
+
+There is no warehouse either: `markReadyToShip(id)` has no inbound adapter and its input carries no carrier data. The
+service sets the stand-in values when it moves SCHEDULED to READY_TO_SHIP: `carrierCode` `STAND-IN`,
+`trackingNumber` `TRK-` + fulfillmentId. No port: a real carrier assignment would add one.
+
 ## Consequences
 
 No real warehouse integration; replacing it is a new adapter behind the same port.
